@@ -232,6 +232,117 @@ def random_empty_filament_empty_vendor_mod():
         yield random_empty_filament_empty_vendor
 
 
+@contextmanager
+def random_project_impl():
+    """Return a random project."""
+    result = httpx.post(
+        f"{URL}/api/v1/project",
+        json={
+            "name": "Integration Test Project",
+            "description": "A project for testing CRUD operations",
+            "link": "http://example.com/test-project",
+        },
+    )
+    result.raise_for_status()
+
+    project: dict[str, Any] = result.json()
+    yield project
+
+    httpx.delete(f"{URL}/api/v1/project/{project['id']}").raise_for_status()
+
+
+@contextmanager
+def random_printer_impl():
+    """Return a random printer."""
+    result = httpx.post(
+        f"{URL}/api/v1/printer",
+        json={
+            "name": "Integration Test Printer",
+            "model": "Prusa i3 MK3S",
+            "location": "Lab 1",
+            "comment": "Testing printer CRUD",
+        },
+    )
+    result.raise_for_status()
+    printer: dict[str, Any] = result.json()
+    yield printer
+    httpx.delete(f"{URL}/api/v1/printer/{printer['id']}").raise_for_status()
+
+
+@contextmanager
+def random_plate_impl(project_id: int):
+    """Return a random plate."""
+    result = httpx.post(
+        f"{URL}/api/v1/plate",
+        json={
+            "project_id": project_id,
+            "name": "Plate Alpha",
+            "file_path": "projects/test/plate_alpha.gcode",
+            "estimated_weight": 42.5,
+            "estimated_time": 7200,
+            "comment": "PLA test plate",
+        },
+    )
+    result.raise_for_status()
+
+    plate: dict[str, Any] = result.json()
+    yield plate
+
+    httpx.delete(f"{URL}/api/v1/plate/{plate['id']}").raise_for_status()
+
+
+@contextmanager
+def random_print_job_impl(plate_id: int, printer_id: int | None = None):
+    """Return a random print job."""
+    payload = {
+        "plate_id": plate_id,
+        "status": "pending",
+        "comment": "Initial test job",
+        "spool_usages": [],
+    }
+    if printer_id is not None:
+        payload["printer_id"] = printer_id
+
+    result = httpx.post(
+        f"{URL}/api/v1/print_job",
+        json=payload,
+    )
+    result.raise_for_status()
+
+    print_job: dict[str, Any] = result.json()
+    yield print_job
+
+    httpx.delete(f"{URL}/api/v1/print_job/{print_job['id']}").raise_for_status()
+
+
+@pytest.fixture
+def random_project():
+    """Return a random project."""
+    with random_project_impl() as project:
+        yield project
+
+
+@pytest.fixture
+def random_printer():
+    """Return a random printer."""
+    with random_printer_impl() as printer:
+        yield printer
+
+
+@pytest.fixture
+def random_plate(random_project):
+    """Return a random plate."""
+    with random_plate_impl(random_project["id"]) as plate:
+        yield plate
+
+
+@pytest.fixture
+def random_print_job(random_plate, random_printer):
+    """Return a random print job."""
+    with random_print_job_impl(random_plate["id"], random_printer["id"]) as print_job:
+        yield print_job
+
+
 def length_from_weight(*, weight: float, diameter: float, density: float) -> float:
     """Calculate the length of a piece of filament.
 

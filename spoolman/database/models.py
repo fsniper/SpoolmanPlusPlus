@@ -116,3 +116,70 @@ class SpoolField(Base):
     spool: Mapped["Spool"] = relationship(back_populates="extra")
     key: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
     value: Mapped[str] = mapped_column(Text())
+
+
+class Project(Base):
+    __tablename__ = "project"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column()
+    name: Mapped[str] = mapped_column(String(256))
+    description: Mapped[str | None] = mapped_column(String(1024))
+    link: Mapped[str | None] = mapped_column(String(1024))
+    plates: Mapped[list["Plate"]] = relationship(back_populates="project")
+
+
+class Plate(Base):
+    __tablename__ = "plate"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column()
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"))
+    project: Mapped["Project"] = relationship(back_populates="plates")
+    name: Mapped[str] = mapped_column(String(256))
+    file_path: Mapped[str | None] = mapped_column(String(1024))
+    estimated_weight: Mapped[float | None] = mapped_column()
+    estimated_time: Mapped[int | None] = mapped_column(comment="Estimated time in seconds")
+    comment: Mapped[str | None] = mapped_column(String(1024))
+    print_jobs: Mapped[list["PrintJob"]] = relationship(back_populates="plate")
+
+
+class Printer(Base):
+    __tablename__ = "printer"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column(default=lambda: datetime.utcnow().replace(microsecond=0))
+    name: Mapped[str] = mapped_column(String(256))
+    model: Mapped[str | None] = mapped_column(String(256))
+    location: Mapped[str | None] = mapped_column(String(256))
+    comment: Mapped[str | None] = mapped_column(String(1024))
+
+    print_jobs: Mapped[list["PrintJob"]] = relationship(back_populates="printer")
+
+
+class PrintJob(Base):
+    __tablename__ = "print_job"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column()
+    plate_id: Mapped[int] = mapped_column(ForeignKey("plate.id"))
+    plate: Mapped["Plate"] = relationship(back_populates="print_jobs")
+    status: Mapped[str] = mapped_column(String(64))
+    start_time: Mapped[datetime | None] = mapped_column()
+    end_time: Mapped[datetime | None] = mapped_column()
+    printer_id: Mapped[int | None] = mapped_column(ForeignKey("printer.id"))
+    printer: Mapped[Optional["Printer"]] = relationship(back_populates="print_jobs")
+    comment: Mapped[str | None] = mapped_column(String(1024))
+    spool_usages: Mapped[list["PrintJobSpool"]] = relationship(back_populates="print_job")
+
+
+
+class PrintJobSpool(Base):
+    __tablename__ = "print_job_spool"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    print_job_id: Mapped[int] = mapped_column(ForeignKey("print_job.id"))
+    print_job: Mapped["PrintJob"] = relationship(back_populates="spool_usages")
+    spool_id: Mapped[int] = mapped_column(ForeignKey("spool.id"))
+    spool: Mapped["Spool"] = relationship()
+    weight_used: Mapped[float] = mapped_column()

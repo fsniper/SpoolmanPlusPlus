@@ -6,9 +6,12 @@ import { ErrorComponent } from "@refinedev/antd";
 import "@refinedev/antd/dist/reset.css";
 
 import {
+  DesktopOutlined,
   FileOutlined,
   HighlightOutlined,
   HomeOutlined,
+  PrinterOutlined,
+  ProjectOutlined,
   QuestionOutlined,
   TableOutlined,
   ToolOutlined,
@@ -52,6 +55,42 @@ const LoadablePage = loadable((props: LoadablePageProps) => import(`./pages/${pr
   fallback: <div>Page is Loading...</div>,
   cacheKey: (props: LoadablePageProps) => `page-${props.name}`,
 });
+
+interface LoadableSimplePageProps {
+  page: "list" | "create" | "edit";
+}
+
+const LoadableProjectPage = loadable(
+  (props: LoadableSimplePageProps) => import(`./pages/projects/${props.page}.tsx`),
+  {
+    fallback: <div>Page is Loading...</div>,
+    cacheKey: (props: LoadableSimplePageProps) => `project-${props.page}`,
+  },
+);
+
+const LoadablePlatePage = loadable(
+  (props: LoadableSimplePageProps) => import(`./pages/plates/${props.page}.tsx`),
+  {
+    fallback: <div>Page is Loading...</div>,
+    cacheKey: (props: LoadableSimplePageProps) => `plate-${props.page}`,
+  },
+);
+
+const LoadablePrintJobPage = loadable(
+  (props: LoadableSimplePageProps) => import(`./pages/print_jobs/${props.page}.tsx`),
+  {
+    fallback: <div>Page is Loading...</div>,
+    cacheKey: (props: LoadableSimplePageProps) => `print_job-${props.page}`,
+  },
+);
+
+const LoadablePrinterPage = loadable(
+  (props: LoadableSimplePageProps) => import(`./pages/printers/${props.page}.tsx`),
+  {
+    fallback: <div>Page is Loading...</div>,
+    cacheKey: (props: LoadableSimplePageProps) => `printer-${props.page}`,
+  },
+);
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -107,6 +146,13 @@ function App() {
                   },
                 },
                 {
+                  name: "Spool Management",
+                  meta: {
+                    icon: <FileOutlined />,
+                    label: "Spool Management",
+                  },
+                },
+                {
                   name: "spool",
                   list: "/spool",
                   create: "/spool/create",
@@ -116,6 +162,7 @@ function App() {
                   meta: {
                     canDelete: true,
                     icon: <FileOutlined />,
+                    parent: "Spool Management",
                   },
                 },
                 {
@@ -128,6 +175,7 @@ function App() {
                   meta: {
                     canDelete: true,
                     icon: <HighlightOutlined />,
+                    parent: "Spool Management",
                   },
                 },
                 {
@@ -140,6 +188,7 @@ function App() {
                   meta: {
                     canDelete: true,
                     icon: <UserOutlined />,
+                    parent: "Spool Management",
                   },
                 },
                 {
@@ -148,6 +197,61 @@ function App() {
                   meta: {
                     canDelete: false,
                     icon: <TableOutlined />,
+                    parent: "Spool Management",
+                  },
+                },
+                {
+                  name: "Print Management",
+                  meta: {
+                    icon: <PrinterOutlined />,
+                    label: "Print Management",
+                  },
+                },
+                {
+                  name: "project",
+                  list: "/project",
+                  create: "/project/create",
+                  clone: "/project/clone/:id",
+                  edit: "/project/edit/:id",
+                  meta: {
+                    canDelete: true,
+                    icon: <ProjectOutlined />,
+                    parent: "Print Management",
+                  },
+                },
+                {
+                  name: "plate",
+                  list: "/plate",
+                  create: "/plate/create",
+                  clone: "/plate/clone/:id",
+                  edit: "/plate/edit/:id",
+                  meta: {
+                    canDelete: true,
+                    icon: <FileOutlined />,
+                    parent: "Print Management",
+                  },
+                },
+                {
+                  name: "print_job",
+                  list: "/print_job",
+                  create: "/print_job/create",
+                  edit: "/print_job/edit/:id",
+                  meta: {
+                    canDelete: true,
+                    icon: <PrinterOutlined />,
+                    parent: "Print Management",
+                  },
+                },
+                {
+                  name: "printer",
+                  list: "/printer",
+                  create: "/printer/create",
+                  clone: "/printer/clone/:id",
+                  edit: "/printer/edit/:id",
+                  meta: {
+                    canDelete: true,
+                    icon: <DesktopOutlined />,
+                    parent: "Print Management",
                   },
                 },
                 {
@@ -221,6 +325,29 @@ function App() {
                     />
                     <Route path="edit/:id" element={<LoadableResourcePage resource="vendors" page="edit" />} />
                     <Route path="show/:id" element={<LoadableResourcePage resource="vendors" page="show" />} />
+                  </Route>
+                  <Route path="/project">
+                    <Route index element={<LoadableProjectPage page="list" />} />
+                    <Route path="create" element={<LoadableProjectPage page="create" />} />
+                    <Route path="clone/:id" element={<LoadableProjectPage page="create" />} />
+                    <Route path="edit/:id" element={<LoadableProjectPage page="edit" />} />
+                  </Route>
+                  <Route path="/plate">
+                    <Route index element={<LoadablePlatePage page="list" />} />
+                    <Route path="create" element={<LoadablePlatePage page="create" />} />
+                    <Route path="clone/:id" element={<LoadablePlatePage page="create" />} />
+                    <Route path="edit/:id" element={<LoadablePlatePage page="edit" />} />
+                  </Route>
+                  <Route path="/print_job">
+                    <Route index element={<LoadablePrintJobPage page="list" />} />
+                    <Route path="create" element={<LoadablePrintJobPage page="create" />} />
+                    <Route path="edit/:id" element={<LoadablePrintJobPage page="edit" />} />
+                  </Route>
+                  <Route path="/printer">
+                    <Route index element={<LoadablePrinterPage page="list" />} />
+                    <Route path="create" element={<LoadablePrinterPage page="create" />} />
+                    <Route path="clone/:id" element={<LoadablePrinterPage page="create" />} />
+                    <Route path="edit/:id" element={<LoadablePrinterPage page="edit" />} />
                   </Route>
                   <Route path="/settings/*" element={<LoadablePage name="settings" />} />
                   <Route path="/help" element={<LoadablePage name="help" />} />

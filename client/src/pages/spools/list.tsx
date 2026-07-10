@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 import { List, useTable } from "@refinedev/antd";
 import { useInvalidate, useNavigation, useTranslate } from "@refinedev/core";
-import { Button, Dropdown, Modal, Table } from "antd";
+import { Button, Dropdown, Modal, Table, Tooltip } from "antd";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useCallback, useMemo, useState } from "react";
@@ -80,8 +80,9 @@ function translateColumnI18nKey(columnName: string): string {
 
 const namespace = "spoolList-v2";
 
-const allColumns: (keyof ISpoolCollapsed & string)[] = [
+const allColumns: (keyof ISpoolCollapsed & string | "percentage")[] = [
   "id",
+  "percentage",
   "filament.combined_name",
   "filament.material",
   "price",
@@ -355,6 +356,31 @@ export const SpoolList = () => {
             id: "id",
             i18ncat: "spool",
             width: 70,
+          }),
+          SortedColumn({
+            ...commonProps,
+            id: "percentage",
+            title: "%",
+            align: "center",
+            width: 50,
+            render: (_: any, record: ISpoolCollapsed) => {
+              let percent = 0;
+              const remaining = record.remaining_weight;
+              const total = record.initial_weight ?? record.filament?.weight;
+              if (remaining !== undefined && total !== undefined && total > 0) {
+                percent = Math.max(0, Math.min(100, (remaining / total) * 100));
+              }
+              // Hue 210 is blue, Hue 360 is red. This transitions through purple.
+              const hue = 210 + (100 - percent) * 1.5;
+              const barColor = `hsl(${hue}, 100%, 54%)`;
+              return (
+                <Tooltip title={`${percent.toFixed(1)}%`}>
+                  <div style={{ width: 12, height: 40, backgroundColor: "#e8e8e8", borderRadius: 6, overflow: "hidden", display: "inline-flex", flexDirection: "column", justifyContent: "flex-end", verticalAlign: "middle", border: "1px solid #d9d9d9" }}>
+                    <div style={{ height: `${percent}%`, backgroundColor: barColor, transition: "height 0.3s ease, background-color 0.3s ease", width: "100%" }} />
+                  </div>
+                </Tooltip>
+              );
+            },
           }),
           SpoolIconColumn({
             ...commonProps,

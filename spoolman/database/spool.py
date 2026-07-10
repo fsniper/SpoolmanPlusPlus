@@ -201,6 +201,15 @@ async def find(  # noqa: C901, PLR0912
                 sorts.append(models.Filament.name)
             elif fieldstr == "price":
                 sorts.append(coalesce(models.Spool.price, models.Filament.price))
+            elif fieldstr == "percentage":
+                total_w = coalesce(models.Spool.initial_weight, models.Filament.weight)
+                rem_w = total_w - models.Spool.used_weight
+                sorts.append(
+                    sqlalchemy.case(
+                        (total_w > 0, sqlalchemy.cast(rem_w, sqlalchemy.Float) / sqlalchemy.cast(total_w, sqlalchemy.Float)),
+                        else_=0,
+                    )
+                )
             else:
                 sorts.append(parse_nested_field(models.Spool, fieldstr))
 

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, PlainSerializer
+from pydantic import BaseModel, Field, PlainSerializer, field_validator
 
 from spoolman.database import models
 from spoolman.math import length_from_weight
@@ -390,6 +390,130 @@ class BackupResponse(BaseModel):
     )
 
 
+class Project(BaseModel):
+    id: int = Field(description="Unique internal ID of this project.")
+    registered: SpoolmanDateTime = Field(description="When the project was registered in the database. UTC Timezone.")
+    name: str = Field(min_length=1, max_length=256, description="Project name.", examples=["Spec Project"])
+    description: str | None = Field(None, max_length=1024, description="Optional description.")
+    link: str | None = Field(None, max_length=1024, description="Optional URL link.")
+
+    @staticmethod
+    def from_db(item: models.Project) -> "Project":
+        return Project(
+            id=item.id,
+            registered=item.registered,
+            name=item.name,
+            description=item.description,
+            link=item.link,
+        )
+
+
+class Plate(BaseModel):
+    id: int = Field(description="Unique internal ID of this build plate.")
+    registered: SpoolmanDateTime = Field(description="When the plate was registered. UTC Timezone.")
+    project_id: int = Field(description="Associated project ID.")
+    name: str = Field(min_length=1, max_length=256, description="Plate name.", examples=["Plate Alpha"])
+    file_path: str | None = Field(None, max_length=1024, description="Optional G-code file path.")
+    estimated_weight: float | None = Field(None, ge=0, description="Estimated filament weight in grams.")
+    estimated_time: int | None = Field(None, ge=0, description="Estimated printing time in seconds.")
+    comment: str | None = Field(None, max_length=1024, description="Optional comment.")
+
+    @staticmethod
+    def from_db(item: models.Plate) -> "Plate":
+        return Plate(
+            id=item.id,
+            registered=item.registered,
+            project_id=item.project_id,
+            name=item.name,
+            file_path=item.file_path,
+            estimated_weight=item.estimated_weight,
+            estimated_time=item.estimated_time,
+            comment=item.comment,
+        )
+
+
+class Printer(BaseModel):
+    id: int = Field(description="Unique internal ID of this printer.")
+    registered: SpoolmanDateTime = Field(description="When the printer was registered. UTC Timezone.")
+    name: str = Field(min_length=1, max_length=256, description="Printer name.", examples=["Voron 2.4"])
+    model: str | None = Field(None, max_length=256, description="Optional printer model.", examples=["Voron 2.4 R2"])
+    location: str | None = Field(None, max_length=256, description="Optional printer location.", examples=["Lab 1"])
+    comment: str | None = Field(None, max_length=1024, description="Optional comment.")
+
+    @staticmethod
+    def from_db(item: models.Printer) -> "Printer":
+        return Printer(
+            id=item.id,
+            registered=item.registered,
+            name=item.name,
+            model=item.model,
+            location=item.location,
+            comment=item.comment,
+        )
+
+
+class PrinterParameters(BaseModel):
+    name: str = Field(min_length=1, max_length=256, description="Printer name.", examples=["Prusa i3 MK3S"])
+    model: str | None = Field(None, max_length=256, description="Printer model.", examples=["MK3S"])
+    location: str | None = Field(None, max_length=256, description="Printer location.", examples=["Maker space"])
+    comment: str | None = Field(None, max_length=1024, description="Optional comment.", examples=[""])
+
+
+class PrinterUpdateParameters(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=256, description="Printer name.", examples=["Prusa i3 MK3S"])
+    model: str | None = Field(None, max_length=256, description="Printer model.")
+    location: str | None = Field(None, max_length=256, description="Printer location.")
+    comment: str | None = Field(None, max_length=1024, description="Optional comment.")
+
+    @field_validator("name")
+    @classmethod
+    def prevent_none(cls: type["PrinterUpdateParameters"], v: str | None) -> str | None:
+        """Prevent name from being None."""
+        if v is None:
+            raise ValueError("Value must not be None.")
+        return v
+
+
+class PrintJobSpool(BaseModel):
+    spool_id: int = Field(description="Spool ID used.")
+    weight_used: float = Field(ge=0, description="Weight used from this spool in grams.")
+
+    @staticmethod
+    def from_db(item: models.PrintJobSpool) -> "PrintJobSpool":
+        return PrintJobSpool(
+            spool_id=item.spool_id,
+            weight_used=item.weight_used,
+        )
+
+
+class PrintJob(BaseModel):
+    id: int = Field(description="Unique internal ID of this print job.")
+    registered: SpoolmanDateTime = Field(description="When the print job was registered. UTC Timezone.")
+    plate_id: int = Field(description="Associated plate ID.")
+    status: str = Field(max_length=64, description="Status of the print job (e.g. successful, pending).")
+    start_time: SpoolmanDateTime | None = Field(None, description="Start time. UTC Timezone.")
+    end_time: SpoolmanDateTime | None = Field(None, description="End time. UTC Timezone.")
+    printer_id: int | None = Field(None, description="Associated printer ID.")
+    printer: Printer | None = Field(None, description="Associated printer details.")
+    comment: str | None = Field(None, max_length=1024, description="Optional comment.")
+    spool_usages: list[PrintJobSpool] = Field(default=[], description="Filament usage per spool.")
+
+    @staticmethod
+    def from_db(item: models.PrintJob) -> "PrintJob":
+        return PrintJob(
+            id=item.id,
+            registered=item.registered,
+            plate_id=item.plate_id,
+            status=item.status,
+            start_time=item.start_time,
+            end_time=item.end_time,
+            printer_id=item.printer_id,
+            printer=Printer.from_db(item.printer) if item.printer is not None else None,
+            comment=item.comment,
+            spool_usages=[PrintJobSpool.from_db(u) for u in item.spool_usages] if item.spool_usages else [],
+        )
+
+
 class EventType(str, Enum):
     """Event types."""
 
@@ -433,3 +557,32 @@ class SettingEvent(Event):
 
     payload: SettingKV = Field(description="Updated setting.")
     resource: Literal["setting"] = Field(description="Resource type.")
+
+
+class ProjectEvent(Event):
+    """Event."""
+
+    payload: Project = Field(description="Updated project.")
+    resource: Literal["project"] = Field(description="Resource type.")
+
+
+class PlateEvent(Event):
+    """Event."""
+
+    payload: Plate = Field(description="Updated plate.")
+    resource: Literal["plate"] = Field(description="Resource type.")
+
+
+class PrintJobEvent(Event):
+    """Event."""
+
+    payload: PrintJob = Field(description="Updated print job.")
+    resource: Literal["print_job"] = Field(description="Resource type.")
+
+
+class PrinterEvent(Event):
+    """Event."""
+
+    payload: Printer = Field(description="Updated printer.")
+    resource: Literal["printer"] = Field(description="Resource type.")
+
