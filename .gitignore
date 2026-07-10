@@ -207,3 +207,4 @@ data/
 .pdm-python
 .history
 .claude
+.agents/
