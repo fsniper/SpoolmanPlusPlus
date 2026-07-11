@@ -5,6 +5,7 @@ import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { IProject } from "./model";
+import { ProjectFiles } from "./ProjectFiles";
 
 export const ProjectEdit = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -83,6 +84,9 @@ export const ProjectEdit = () => {
         </Form.Item>
       </Form>
       {hasChanged && <Alert description="This project has been updated since you opened the form." type="warning" showIcon />}
+      {formProps.initialValues?.id && (
+        <ProjectFiles projectId={formProps.initialValues.id} />
+      )}
     </Edit>
   );
 };

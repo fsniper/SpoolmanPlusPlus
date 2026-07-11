@@ -127,6 +127,22 @@ class Project(Base):
     description: Mapped[str | None] = mapped_column(String(1024))
     link: Mapped[str | None] = mapped_column(String(1024))
     plates: Mapped[list["Plate"]] = relationship(back_populates="project")
+    files: Mapped[list["ProjectFile"]] = relationship(back_populates="project")
+
+
+class ProjectFile(Base):
+    __tablename__ = "project_file"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column()
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"))
+    project: Mapped["Project"] = relationship(back_populates="files")
+    name: Mapped[str] = mapped_column(String(256))
+    
+    file_path: Mapped[str | None] = mapped_column(String(1024))
+    size: Mapped[int | None] = mapped_column()
+    plate_id: Mapped[int | None] = mapped_column(ForeignKey("plate.id"))
+    plate: Mapped[Optional["Plate"]] = relationship()
 
 
 class Plate(Base):

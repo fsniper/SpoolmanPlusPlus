@@ -408,6 +408,29 @@ class Project(BaseModel):
         )
 
 
+class ProjectFile(BaseModel):
+    id: int = Field(description="Unique internal ID of this project file.")
+    registered: SpoolmanDateTime = Field(description="When the file was registered. UTC Timezone.")
+    project_id: int = Field(description="Associated project ID.")
+    name: str = Field(min_length=1, max_length=256, description="File name.", examples=["cube.stl"])
+    file_path: str | None = Field(None, max_length=1024, description="Path or link to the file.")
+    size: int | None = Field(None, description="Size of the file in bytes.")
+    plate_id: int | None = Field(None, description="Associated plate ID if linked from a plate.")
+
+    @staticmethod
+    def from_db(item: models.ProjectFile) -> "ProjectFile":
+        return ProjectFile(
+            id=item.id,
+            registered=item.registered,
+            project_id=item.project_id,
+            name=item.name,
+            file_path=item.file_path,
+            size=item.size,
+            plate_id=item.plate_id,
+        )
+
+
+
 class Plate(BaseModel):
     id: int = Field(description="Unique internal ID of this build plate.")
     registered: SpoolmanDateTime = Field(description="When the plate was registered. UTC Timezone.")
@@ -560,10 +583,14 @@ class SettingEvent(Event):
 
 
 class ProjectEvent(Event):
-    """Event."""
-
     payload: Project = Field(description="Updated project.")
     resource: Literal["project"] = Field(description="Resource type.")
+
+
+class ProjectFileEvent(Event):
+    payload: ProjectFile = Field(description="Updated project file.")
+    resource: Literal["project_file"] = Field(description="Resource type.")
+
 
 
 class PlateEvent(Event):
