@@ -62,12 +62,19 @@ const Viewer = ({ url }: { url: string }) => {
         const center = new THREE.Vector3();
         bbox.getCenter(center);
         mesh.position.sub(center); // Center the mesh
+        
+        // Rotate so Z is up (common for STL files)
+        mesh.rotation.x = -Math.PI / 2;
 
         const size = new THREE.Vector3();
         bbox.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z);
         
         camera.position.z = maxDim * 1.5;
+        camera.position.y = maxDim * 1.5; // Look down slightly
+        camera.far = Math.max(1000, maxDim * 10);
+        camera.updateProjectionMatrix();
+
         controls.target.set(0, 0, 0);
         controls.update();
         
