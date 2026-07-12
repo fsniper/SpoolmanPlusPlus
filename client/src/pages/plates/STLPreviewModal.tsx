@@ -19,18 +19,26 @@ const Viewer = ({ url }: { url: string }) => {
   useEffect(() => {
     if (!mountRef.current) return;
 
-    const width = mountRef.current.clientWidth;
-    const height = mountRef.current.clientHeight;
-
     const scene = new THREE.Scene();
-    // Use dark-mode compatible background or just transparent
     scene.background = new THREE.Color(0x222222);
 
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     
-    renderer.setSize(width, height);
     mountRef.current.appendChild(renderer.domElement);
+
+    const handleResize = () => {
+      if (!mountRef.current) return;
+      const width = mountRef.current.clientWidth;
+      const height = mountRef.current.clientHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    };
+    handleResize();
+
+    const resizeObserver = new ResizeObserver(() => handleResize());
+    resizeObserver.observe(mountRef.current);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     
@@ -82,6 +90,7 @@ const Viewer = ({ url }: { url: string }) => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
       if (mountRef.current && renderer.domElement) {
         mountRef.current.removeChild(renderer.domElement);
       }
@@ -108,9 +117,11 @@ export const STLPreviewModal = ({ plate, open, onClose }: STLPreviewModalProps) 
       onCancel={onClose}
       footer={null}
       width={800}
+      centered
       destroyOnClose
+      bodyStyle={{ padding: 0, overflow: "hidden", borderRadius: "0 0 8px 8px" }}
     >
-      <div style={{ height: "60vh", width: "100%", position: "relative" }}>
+      <div style={{ height: "450px", width: "100%", position: "relative" }}>
         {open && <Viewer url={fileUrl} />}
       </div>
     </Modal>
