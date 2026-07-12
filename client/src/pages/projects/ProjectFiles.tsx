@@ -1,9 +1,10 @@
 import { Button, Form, Input, Modal, Select, Space, Table, Upload, message, Tooltip, Popconfirm } from "antd";
-import { DownloadOutlined, DeleteOutlined, LinkOutlined, UploadOutlined } from "@ant-design/icons";
+import { DownloadOutlined, DeleteOutlined, LinkOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useState } from "react";
 import { getAPIURL } from "../../utils/url";
 import { useSelect } from "@refinedev/antd";
 import { IPlate } from "../plates/model";
+import { STLPreviewModal } from "../plates/STLPreviewModal";
 
 export interface IProjectFile {
   id: number;
@@ -23,6 +24,7 @@ export const ProjectFiles = ({ projectId }: ProjectFilesProps) => {
   const [files, setFiles] = useState<IProjectFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [isLinkModalVisible, setIsLinkModalVisible] = useState(false);
+  const [previewFile, setPreviewFile] = useState<IProjectFile | null>(null);
   const [linkForm] = Form.useForm();
   
   const { selectProps: plateSelectProps } = useSelect<IPlate>({
@@ -117,20 +119,31 @@ export const ProjectFiles = ({ projectId }: ProjectFilesProps) => {
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: IProjectFile) => (
-        <Space>
-          <Tooltip title="Download">
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={() => handleDownload(record.id, record.name)}
-              disabled={!!record.plate_id} // Currently we don't have download for linked plate files directly unless it's an uploaded plate
-            />
-          </Tooltip>
-          <Popconfirm title="Are you sure you want to delete this file?" onConfirm={() => handleDelete(record.id)}>
-            <Button danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_: any, record: IProjectFile) => {
+        const isStl = record.name.toLowerCase().endsWith(".stl");
+        return (
+          <Space>
+            {isStl && (
+              <Tooltip title="Preview 3D">
+                <Button
+                  icon={<EyeOutlined />}
+                  onClick={() => setPreviewFile(record)}
+                />
+              </Tooltip>
+            )}
+            <Tooltip title="Download">
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={() => handleDownload(record.id, record.name)}
+                disabled={!!record.plate_id} // Currently we don't have download for linked plate files directly unless it's an uploaded plate
+              />
+            </Tooltip>
+            <Popconfirm title="Are you sure you want to delete this file?" onConfirm={() => handleDelete(record.id)}>
+              <Button danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -171,6 +184,19 @@ export const ProjectFiles = ({ projectId }: ProjectFilesProps) => {
         loading={loading}
         pagination={false}
         size="small"
+      />
+
+      <STLPreviewModal 
+        plate={previewFile ? {
+          id: 0,
+          project_id: projectId,
+          project_file_id: previewFile.id,
+          name: previewFile.name,
+          file_path: previewFile.name,
+          registered: "",
+        } : null} 
+        open={!!previewFile} 
+        onClose={() => setPreviewFile(null)} 
       />
 
       <Modal
