@@ -67,7 +67,7 @@ async def create(
     print_job = models.PrintJob(
         plate_id=plate_id,
         status=status,
-        registered=datetime.utcnow().replace(microsecond=0),
+        registered=datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0),
         start_time=start_time,
         end_time=end_time,
         printer_id=db_printer.id if db_printer is not None else None,
@@ -294,7 +294,7 @@ async def print_job_changed(print_job: models.PrintJob, typ: EventType) -> None:
             PrintJobEvent(
                 type=typ,
                 resource="print_job",
-                date=datetime.utcnow(),
+                date=datetime.now(timezone.utc),
                 payload=PrintJob.from_db(print_job),
             ),
         )
@@ -310,7 +310,7 @@ async def print_job_changed_payload(payload: PrintJob, typ: EventType) -> None:
             PrintJobEvent(
                 type=typ,
                 resource="print_job",
-                date=datetime.utcnow(),
+                date=datetime.now(timezone.utc),
                 payload=payload,
             ),
         )

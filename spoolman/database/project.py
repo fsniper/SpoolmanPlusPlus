@@ -1,7 +1,7 @@
 """Helper functions for interacting with project database objects."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 import sqlalchemy
 from sqlalchemy import func, select
@@ -26,7 +26,7 @@ async def create(
     """Add a new project to the database."""
     project = models.Project(
         name=name,
-        registered=datetime.utcnow().replace(microsecond=0),
+        registered=datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0),
         description=description,
         link=link,
     )
@@ -121,7 +121,7 @@ async def project_changed(project: models.Project, typ: EventType) -> None:
             ProjectEvent(
                 type=typ,
                 resource="project",
-                date=datetime.utcnow(),
+                date=datetime.now(timezone.utc),
                 payload=Project.from_db(project),
             ),
         )

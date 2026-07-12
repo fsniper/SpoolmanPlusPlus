@@ -1,6 +1,6 @@
 """SQLAlchemy data models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import ForeignKey, Integer, String, Text
@@ -135,7 +135,7 @@ class ProjectFile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     registered: Mapped[datetime] = mapped_column()
-    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"))
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"), index=True)
     project: Mapped["Project"] = relationship(back_populates="files")
     name: Mapped[str] = mapped_column(String(256))
     
@@ -148,11 +148,11 @@ class Plate(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     registered: Mapped[datetime] = mapped_column()
-    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"))
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"), index=True)
     project: Mapped["Project"] = relationship(back_populates="plates")
     name: Mapped[str] = mapped_column(String(256))
     file_path: Mapped[str | None] = mapped_column(String(1024))
-    project_file_id: Mapped[int | None] = mapped_column(ForeignKey("project_file.id"))
+    project_file_id: Mapped[int | None] = mapped_column(ForeignKey("project_file.id"), index=True)
     project_file: Mapped[Optional["ProjectFile"]] = relationship()
     estimated_weight: Mapped[float | None] = mapped_column()
     estimated_time: Mapped[int | None] = mapped_column(comment="Estimated time in seconds")
@@ -164,7 +164,7 @@ class Printer(Base):
     __tablename__ = "printer"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    registered: Mapped[datetime] = mapped_column(default=lambda: datetime.utcnow().replace(microsecond=0))
+    registered: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0))
     name: Mapped[str] = mapped_column(String(256))
     model: Mapped[str | None] = mapped_column(String(256))
     location: Mapped[str | None] = mapped_column(String(256))
@@ -178,12 +178,12 @@ class PrintJob(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     registered: Mapped[datetime] = mapped_column()
-    plate_id: Mapped[int] = mapped_column(ForeignKey("plate.id"))
+    plate_id: Mapped[int] = mapped_column(ForeignKey("plate.id"), index=True)
     plate: Mapped["Plate"] = relationship(back_populates="print_jobs")
     status: Mapped[str] = mapped_column(String(64))
     start_time: Mapped[datetime | None] = mapped_column()
     end_time: Mapped[datetime | None] = mapped_column()
-    printer_id: Mapped[int | None] = mapped_column(ForeignKey("printer.id"))
+    printer_id: Mapped[int | None] = mapped_column(ForeignKey("printer.id"), index=True)
     printer: Mapped[Optional["Printer"]] = relationship(back_populates="print_jobs")
     comment: Mapped[str | None] = mapped_column(String(1024))
     spool_usages: Mapped[list["PrintJobSpool"]] = relationship(back_populates="print_job")
@@ -194,8 +194,8 @@ class PrintJobSpool(Base):
     __tablename__ = "print_job_spool"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    print_job_id: Mapped[int] = mapped_column(ForeignKey("print_job.id"))
+    print_job_id: Mapped[int] = mapped_column(ForeignKey("print_job.id"), index=True)
     print_job: Mapped["PrintJob"] = relationship(back_populates="spool_usages")
-    spool_id: Mapped[int] = mapped_column(ForeignKey("spool.id"))
+    spool_id: Mapped[int] = mapped_column(ForeignKey("spool.id"), index=True)
     spool: Mapped["Spool"] = relationship()
     weight_used: Mapped[float] = mapped_column()

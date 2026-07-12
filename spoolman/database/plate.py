@@ -1,7 +1,7 @@
 """Helper functions for interacting with plate database objects."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 import sqlalchemy
 from sqlalchemy import func, select
@@ -40,7 +40,7 @@ async def create(
     plate = models.Plate(
         project_id=project_id,
         name=name,
-        registered=datetime.utcnow().replace(microsecond=0),
+        registered=datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0),
         file_path=file_path,
         project_file_id=project_file_id,
         estimated_weight=estimated_weight,
@@ -147,7 +147,7 @@ async def plate_changed(plate: models.Plate, typ: EventType) -> None:
             PlateEvent(
                 type=typ,
                 resource="plate",
-                date=datetime.utcnow(),
+                date=datetime.now(timezone.utc),
                 payload=Plate.from_db(plate),
             ),
         )
