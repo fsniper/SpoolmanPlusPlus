@@ -25,7 +25,11 @@ const Viewer = ({ url }: { url: string }) => {
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     
-    mountRef.current.appendChild(renderer.domElement);
+    // Clear any existing canvases (useful for React 18 Strict Mode or HMR)
+    if (mountRef.current) {
+      mountRef.current.innerHTML = "";
+      mountRef.current.appendChild(renderer.domElement);
+    }
 
     const handleResize = () => {
       if (!mountRef.current) return;
