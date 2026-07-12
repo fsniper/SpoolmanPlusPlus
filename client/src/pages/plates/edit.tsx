@@ -1,16 +1,19 @@
 import { Edit, useForm, useSelect } from "@refinedev/antd";
 import { HttpError } from "@refinedev/core";
-import { Alert, DatePicker, Form, Input, InputNumber, Select, message } from "antd";
+import { Alert, DatePicker, Form, Input, InputNumber, Select, message, Button } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { IProject } from "../projects/model";
 import { IPlate } from "./model";
 import { ProjectFileSelect } from "./ProjectFileSelect";
+import { STLPreviewModal } from "./STLPreviewModal";
+import { EyeOutlined } from "@ant-design/icons";
 
 export const PlateEdit = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [hasChanged, setHasChanged] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { formProps, saveButtonProps } = useForm<IPlate, HttpError, IPlate, IPlate>({
     liveMode: "manual",
@@ -29,9 +32,28 @@ export const PlateEdit = () => {
     defaultValue: formProps.initialValues?.project_id,
   });
 
+  const canPreview = formProps.initialValues?.project_file_id && formProps.initialValues?.file_path?.toLowerCase().endsWith(".stl");
+
   return (
-    <Edit saveButtonProps={saveButtonProps}>
+    <Edit 
+      saveButtonProps={saveButtonProps}
+      headerButtons={({ defaultButtons }) => (
+        <>
+          {defaultButtons}
+          {canPreview && (
+            <Button icon={<EyeOutlined />} onClick={() => setPreviewOpen(true)}>
+              Preview 3D
+            </Button>
+          )}
+        </>
+      )}
+    >
       {contextHolder}
+      <STLPreviewModal 
+        plate={formProps.initialValues as IPlate} 
+        open={previewOpen} 
+        onClose={() => setPreviewOpen(false)} 
+      />
       <Form {...formProps} layout="vertical">
         <Form.Item label="ID" name={["id"]}>
           <Input readOnly disabled />

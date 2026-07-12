@@ -31,6 +31,12 @@ async def create(
     # Verify project exists
     await project.get_by_id(db, project_id)
 
+    if project_file_id is not None:
+        from spoolman.database import project_file
+        db_file = await project_file.get_by_id(db, project_file_id)
+        if not file_path:
+            file_path = db_file.name
+
     plate = models.Plate(
         project_id=project_id,
         name=name,
@@ -110,7 +116,9 @@ async def update(
         
     if "project_file_id" in data and data["project_file_id"] is not None:
         from spoolman.database import project_file
-        await project_file.get_by_id(db, data["project_file_id"])
+        db_file = await project_file.get_by_id(db, data["project_file_id"])
+        if "file_path" not in data or not data["file_path"]:
+            data["file_path"] = db_file.name
 
     for k, v in data.items():
         setattr(plate, k, v)

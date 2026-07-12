@@ -1,4 +1,4 @@
-import { EditOutlined, FilterOutlined, PrinterOutlined, PlusSquareOutlined } from "@ant-design/icons";
+import { EditOutlined, FilterOutlined, PrinterOutlined, PlusSquareOutlined, EyeOutlined } from "@ant-design/icons";
 import { List, useTable } from "@refinedev/antd";
 import { useInvalidate, useNavigation, useTranslate } from "@refinedev/core";
 import { Button, Table } from "antd";
@@ -16,6 +16,7 @@ import { useLiveify } from "../../components/liveify";
 import { removeUndefined } from "../../utils/filtering";
 import { TableState, useInitialTableState, useStoreInitialState } from "../../utils/saveload";
 import { IPlate } from "./model";
+import { STLPreviewModal } from "./STLPreviewModal";
 
 dayjs.extend(utc);
 
@@ -47,6 +48,8 @@ export const PlateList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectIdFromUrl = searchParams.get("project_id") ? Number(searchParams.get("project_id")) : undefined;
+  
+  const [previewPlate, setPreviewPlate] = useState<IPlate | null>(null);
 
   // Load initial state
   const initialState = useInitialTableState(namespace);
@@ -108,11 +111,22 @@ export const PlateList = () => {
   }
 
   const { editUrl, cloneUrl, createUrl } = useNavigation();
-  const actions = (record: IPlate) => [
-    { name: "Edit", icon: <EditOutlined />, link: editUrl("plate", record.id) },
-    { name: "Clone", icon: <PlusSquareOutlined />, link: cloneUrl("plate", record.id) },
-    { name: "Add Print Job", icon: <PrinterOutlined />, link: `${createUrl("print_job")}?plate_id=${record.id}` },
-  ];
+  const actions = (record: IPlate) => {
+    const canPreview = record.project_file_id && record.file_path?.toLowerCase().endsWith(".stl");
+    const actionList: any[] = [
+      { name: "Edit", icon: <EditOutlined />, link: editUrl("plate", record.id) },
+      { name: "Clone", icon: <PlusSquareOutlined />, link: cloneUrl("plate", record.id) },
+      { name: "Add Print Job", icon: <PrinterOutlined />, link: `${createUrl("print_job")}?plate_id=${record.id}` },
+    ];
+    if (canPreview) {
+      actionList.push({
+        name: "Preview 3D",
+        icon: <EyeOutlined />,
+        onClick: () => setPreviewPlate(record),
+      });
+    }
+    return actionList;
+  };
 
   const commonProps = {
     t,
@@ -207,6 +221,11 @@ export const PlateList = () => {
           }),
           ActionsColumn<IPlate>("Actions", actions),
         ])}
+      />
+      <STLPreviewModal 
+        plate={previewPlate} 
+        open={!!previewPlate} 
+        onClose={() => setPreviewPlate(null)} 
       />
     </List>
   );
