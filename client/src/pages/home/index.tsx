@@ -56,6 +56,16 @@ export const Home = () => {
     pagination: { pageSize: 1 },
     filters: [{ field: "status", operator: "eq", value: "failed" }],
   });
+  const inProgressPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [{ field: "status", operator: "eq", value: "in_progress" }],
+  });
+  const canceledPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [{ field: "status", operator: "eq", value: "canceled" }],
+  });
 
   const hasSpools = !spools.result || spools.result.data.length > 0;
 
@@ -156,6 +166,15 @@ export const Home = () => {
 
       <Row justify="center" gutter={[16, 16]} style={{ marginTop: "1em" }}>
         <Col xs={12} md={6}>
+          <Card loading={inProgressPrintJobs.query.isLoading}>
+            <Statistic 
+              title="In Progress Prints" 
+              value={inProgressPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorPrimary }} 
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
           <Card loading={successfulPrintJobs.query.isLoading}>
             <Statistic 
               title="Successful Prints" 
@@ -170,6 +189,15 @@ export const Home = () => {
               title="Failed Prints" 
               value={failedPrintJobs.result?.total || 0} 
               valueStyle={{ color: token.colorError }} 
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card loading={canceledPrintJobs.query.isLoading}>
+            <Statistic 
+              title="Canceled Prints" 
+              value={canceledPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorTextDescription }} 
             />
           </Card>
         </Col>
