@@ -10,6 +10,7 @@ import { Trans } from "react-i18next";
 import { Link } from "react-router";
 import Logo from "../../icon.svg?react";
 import { ISpool } from "../spools/model";
+import { FolderOutlined, AppstoreOutlined, PrinterOutlined } from "@ant-design/icons";
 
 dayjs.extend(utc);
 
@@ -31,6 +32,30 @@ export const Home = () => {
     resource: "vendor",
     pagination: { pageSize: 1 },
   });
+  
+  // Project Management Stats
+  const projects = useList({
+    resource: "project",
+    pagination: { pageSize: 1 },
+  });
+  const plates = useList({
+    resource: "plate",
+    pagination: { pageSize: 1 },
+  });
+  const printJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+  });
+  const successfulPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [{ field: "status", operator: "eq", value: "successful" }],
+  });
+  const failedPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [{ field: "status", operator: "eq", value: "failed" }],
+  });
 
   const hasSpools = !spools.result || spools.result.data.length > 0;
 
@@ -47,7 +72,7 @@ export const Home = () => {
           </Link>,
         ]}
       >
-        <Statistic title={t(`${props.resource}.${props.resource}`)} value={props.value} prefix={props.icon} />
+        <Statistic title={props.resource === "print_job" ? "Print Jobs" : t(`${props.resource}.${props.resource}`)} value={props.value} prefix={props.icon} />
       </Card>
     </Col>
   );
@@ -105,6 +130,49 @@ export const Home = () => {
           loading={vendors.query.isLoading}
           icon={<UserOutlined />}
         />
+      </Row>
+
+      <Title level={3} style={{ textAlign: "center", marginTop: "2em" }}>Project Management</Title>
+      <Row justify="center" gutter={[16, 16]}>
+        <ResourceStatsCard
+          resource="project"
+          value={projects.result?.total || 0}
+          loading={projects.query.isLoading}
+          icon={<FolderOutlined />}
+        />
+        <ResourceStatsCard
+          resource="plate"
+          value={plates.result?.total || 0}
+          loading={plates.query.isLoading}
+          icon={<AppstoreOutlined />}
+        />
+        <ResourceStatsCard
+          resource="print_job"
+          value={printJobs.result?.total || 0}
+          loading={printJobs.query.isLoading}
+          icon={<PrinterOutlined />}
+        />
+      </Row>
+
+      <Row justify="center" gutter={[16, 16]} style={{ marginTop: "1em" }}>
+        <Col xs={12} md={6}>
+          <Card loading={successfulPrintJobs.query.isLoading}>
+            <Statistic 
+              title="Successful Prints" 
+              value={successfulPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorSuccess }} 
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card loading={failedPrintJobs.query.isLoading}>
+            <Statistic 
+              title="Failed Prints" 
+              value={failedPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorError }} 
+            />
+          </Card>
+        </Col>
       </Row>
       {!hasSpools && (
         <>
