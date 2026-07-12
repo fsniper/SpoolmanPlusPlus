@@ -58,13 +58,14 @@ const LoadablePage = loadable((props: LoadablePageProps) => import(`./pages/${pr
 
 interface LoadableSimplePageProps {
   page: "list" | "create" | "edit";
+  mode?: "create" | "clone";
 }
 
 const LoadableProjectPage = loadable(
   (props: LoadableSimplePageProps) => import(`./pages/projects/${props.page}.tsx`),
   {
     fallback: <div>Page is Loading...</div>,
-    cacheKey: (props: LoadableSimplePageProps) => `project-${props.page}`,
+    cacheKey: (props: LoadableSimplePageProps) => `project-${props.page}-${props.mode ?? ""}`,
   },
 );
 
@@ -72,7 +73,7 @@ const LoadablePlatePage = loadable(
   (props: LoadableSimplePageProps) => import(`./pages/plates/${props.page}.tsx`),
   {
     fallback: <div>Page is Loading...</div>,
-    cacheKey: (props: LoadableSimplePageProps) => `plate-${props.page}`,
+    cacheKey: (props: LoadableSimplePageProps) => `plate-${props.page}-${props.mode ?? ""}`,
   },
 );
 
@@ -80,7 +81,7 @@ const LoadablePrintJobPage = loadable(
   (props: LoadableSimplePageProps) => import(`./pages/print_jobs/${props.page}.tsx`),
   {
     fallback: <div>Page is Loading...</div>,
-    cacheKey: (props: LoadableSimplePageProps) => `print_job-${props.page}`,
+    cacheKey: (props: LoadableSimplePageProps) => `print_job-${props.page}-${props.mode ?? ""}`,
   },
 );
 
@@ -88,7 +89,7 @@ const LoadablePrinterPage = loadable(
   (props: LoadableSimplePageProps) => import(`./pages/printers/${props.page}.tsx`),
   {
     fallback: <div>Page is Loading...</div>,
-    cacheKey: (props: LoadableSimplePageProps) => `printer-${props.page}`,
+    cacheKey: (props: LoadableSimplePageProps) => `printer-${props.page}-${props.mode ?? ""}`,
   },
 );
 
@@ -328,25 +329,25 @@ function App() {
                   </Route>
                   <Route path="/project">
                     <Route index element={<LoadableProjectPage page="list" />} />
-                    <Route path="create" element={<LoadableProjectPage page="create" />} />
-                    <Route path="clone/:id" element={<LoadableProjectPage page="create" />} />
+                    <Route path="create" element={<LoadableProjectPage page="create" mode="create" />} />
+                    <Route path="clone/:id" element={<LoadableProjectPage page="create" mode="clone" />} />
                     <Route path="edit/:id" element={<LoadableProjectPage page="edit" />} />
                   </Route>
                   <Route path="/plate">
                     <Route index element={<LoadablePlatePage page="list" />} />
-                    <Route path="create" element={<LoadablePlatePage page="create" />} />
-                    <Route path="clone/:id" element={<LoadablePlatePage page="create" />} />
+                    <Route path="create" element={<LoadablePlatePage page="create" mode="create" />} />
+                    <Route path="clone/:id" element={<LoadablePlatePage page="create" mode="clone" />} />
                     <Route path="edit/:id" element={<LoadablePlatePage page="edit" />} />
                   </Route>
                   <Route path="/print_job">
                     <Route index element={<LoadablePrintJobPage page="list" />} />
-                    <Route path="create" element={<LoadablePrintJobPage page="create" />} />
+                    <Route path="create" element={<LoadablePrintJobPage page="create" mode="create" />} />
                     <Route path="edit/:id" element={<LoadablePrintJobPage page="edit" />} />
                   </Route>
                   <Route path="/printer">
                     <Route index element={<LoadablePrinterPage page="list" />} />
-                    <Route path="create" element={<LoadablePrinterPage page="create" />} />
-                    <Route path="clone/:id" element={<LoadablePrinterPage page="create" />} />
+                    <Route path="create" element={<LoadablePrinterPage page="create" mode="create" />} />
+                    <Route path="clone/:id" element={<LoadablePrinterPage page="create" mode="clone" />} />
                     <Route path="edit/:id" element={<LoadablePrinterPage page="edit" />} />
                   </Route>
                   <Route path="/settings/*" element={<LoadablePage name="settings" />} />
