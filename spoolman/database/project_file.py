@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import UploadFile
 
-from spoolman.api.v1.models import EventType, ProjectFileEvent
+from spoolman.api.v1.models import EventType, ProjectFileEvent, ProjectFile
 from spoolman.database import models, project, plate
 from spoolman.env import get_data_dir
 from spoolman.exceptions import ItemNotFoundError
@@ -76,7 +76,7 @@ async def create(
         ProjectFileEvent(
             type=EventType.ADDED,
             resource="project_file",
-            payload=db_item,
+            payload=ProjectFile.from_db(db_item),
             date=datetime.now(tz=timezone.utc),
         ),
     )
@@ -128,7 +128,7 @@ async def delete(db: AsyncSession, file_id: int) -> None:
         ProjectFileEvent(
             type=EventType.DELETED,
             resource="project_file",
-            payload=db_item,
+            payload=ProjectFile.from_db(db_item),
             date=datetime.now(tz=timezone.utc),
         ),
     )
