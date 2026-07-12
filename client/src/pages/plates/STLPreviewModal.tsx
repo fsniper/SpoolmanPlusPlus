@@ -2,6 +2,7 @@ import { Modal } from "antd";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { GCodeLoader } from "three/examples/jsm/loaders/GCodeLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { getAPIURL } from "../../utils/url";
 import { IPlate } from "./model";
@@ -12,7 +13,7 @@ interface STLPreviewModalProps {
   onClose: () => void;
 }
 
-const Viewer = ({ url }: { url: string }) => {
+const Viewer = ({ url, isGCode }: { url: string, isGCode: boolean }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,43 +54,77 @@ const Viewer = ({ url }: { url: string }) => {
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
 
-    const loader = new STLLoader();
-    loader.load(
-      url,
-      (geometry: THREE.BufferGeometry) => {
-        geometry.computeVertexNormals();
-        const material = new THREE.MeshPhongMaterial({ color: 0x1677ff, specular: 0x111111, shininess: 200 });
-        const mesh = new THREE.Mesh(geometry, material);
-        
-        geometry.computeBoundingBox();
-        const bbox = geometry.boundingBox!;
-        const center = new THREE.Vector3();
-        bbox.getCenter(center);
-        mesh.position.sub(center); // Center the mesh
-        
-        // Rotate so Z is up (common for STL files)
-        mesh.rotation.x = -Math.PI / 2;
+    if (isGCode) {
+      const loader = new GCodeLoader();
+      loader.load(
+        url,
+        (object: THREE.Object3D) => {
+          const bbox = new THREE.Box3().setFromObject(object);
+          const center = new THREE.Vector3();
+          bbox.getCenter(center);
+          object.position.sub(center);
+          
+          object.rotation.x = -Math.PI / 2;
 
-        const size = new THREE.Vector3();
-        bbox.getSize(size);
-        const maxDim = Math.max(size.x, size.y, size.z);
-        
-        camera.position.z = maxDim * 1.5;
-        camera.position.y = maxDim * 1.5; // Look down slightly
-        camera.far = Math.max(1000, maxDim * 10);
-        camera.updateProjectionMatrix();
+          const size = new THREE.Vector3();
+          bbox.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          
+          camera.position.z = maxDim * 1.5;
+          camera.position.y = maxDim * 1.5;
+          camera.far = Math.max(1000, maxDim * 10);
+          camera.updateProjectionMatrix();
 
-        controls.target.set(0, 0, 0);
-        controls.update();
-        
-        scene.add(mesh);
-      },
-      undefined,
-      (err: unknown) => {
-        console.error(err);
-        setError("Failed to load STL file.");
-      }
-    );
+          controls.target.set(0, 0, 0);
+          controls.update();
+          
+          scene.add(object);
+        },
+        undefined,
+        (err: unknown) => {
+          console.error(err);
+          setError("Failed to load GCode file.");
+        }
+      );
+    } else {
+      const loader = new STLLoader();
+      loader.load(
+        url,
+        (geometry: THREE.BufferGeometry) => {
+          geometry.computeVertexNormals();
+          const material = new THREE.MeshPhongMaterial({ color: 0x1677ff, specular: 0x111111, shininess: 200 });
+          const mesh = new THREE.Mesh(geometry, material);
+          
+          geometry.computeBoundingBox();
+          const bbox = geometry.boundingBox!;
+          const center = new THREE.Vector3();
+          bbox.getCenter(center);
+          mesh.position.sub(center); // Center the mesh
+          
+          // Rotate so Z is up (common for STL files)
+          mesh.rotation.x = -Math.PI / 2;
+
+          const size = new THREE.Vector3();
+          bbox.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          
+          camera.position.z = maxDim * 1.5;
+          camera.position.y = maxDim * 1.5; // Look down slightly
+          camera.far = Math.max(1000, maxDim * 10);
+          camera.updateProjectionMatrix();
+
+          controls.target.set(0, 0, 0);
+          controls.update();
+          
+          scene.add(mesh);
+        },
+        undefined,
+        (err: unknown) => {
+          console.error(err);
+          setError("Failed to load STL file.");
+        }
+      );
+    }
 
     let animationFrameId: number;
     const animate = () => {
@@ -118,8 +153,9 @@ export const STLPreviewModal = ({ plate, open, onClose }: STLPreviewModalProps) 
 
   const fileUrl = `${getAPIURL()}/project/${plate.project_id}/file/${plate.project_file_id}/download`;
   const isStl = plate.file_path?.toLowerCase().endsWith(".stl");
+  const isGCode = plate.file_path?.toLowerCase().endsWith(".gcode");
 
-  if (!isStl) return null;
+  if (!isStl && !isGCode) return null;
 
   return (
     <Modal
@@ -133,7 +169,7 @@ export const STLPreviewModal = ({ plate, open, onClose }: STLPreviewModalProps) 
       bodyStyle={{ padding: 0, overflow: "hidden", borderRadius: "0 0 8px 8px" }}
     >
       <div style={{ height: "450px", width: "100%", position: "relative" }}>
-        {open && <Viewer url={fileUrl} />}
+        {open && <Viewer url={fileUrl} isGCode={!!isGCode} />}
       </div>
     </Modal>
   );

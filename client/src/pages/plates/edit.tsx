@@ -32,7 +32,9 @@ export const PlateEdit = () => {
     defaultValue: formProps.initialValues?.project_id,
   });
 
-  const canPreview = formProps.initialValues?.project_file_id && formProps.initialValues?.file_path?.toLowerCase().endsWith(".stl");
+  const canPreview = formProps.initialValues?.project_file_id && 
+    (formProps.initialValues?.file_path?.toLowerCase().endsWith(".stl") || 
+     formProps.initialValues?.file_path?.toLowerCase().endsWith(".gcode"));
 
   return (
     <Edit 

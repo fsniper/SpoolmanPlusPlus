@@ -112,7 +112,9 @@ export const PlateList = () => {
 
   const { editUrl, cloneUrl, createUrl } = useNavigation();
   const actions = (record: IPlate) => {
-    const canPreview = record.project_file_id && record.file_path?.toLowerCase().endsWith(".stl");
+    const canPreview = record.project_file_id && 
+      (record.file_path?.toLowerCase().endsWith(".stl") || 
+       record.file_path?.toLowerCase().endsWith(".gcode"));
     const actionList: any[] = [
       { name: "Edit", icon: <EditOutlined />, link: editUrl("plate", record.id) },
       { name: "Clone", icon: <PlusSquareOutlined />, link: cloneUrl("plate", record.id) },

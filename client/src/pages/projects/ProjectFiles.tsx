@@ -120,10 +120,10 @@ export const ProjectFiles = ({ projectId }: ProjectFilesProps) => {
       title: "Actions",
       key: "actions",
       render: (_: any, record: IProjectFile) => {
-        const isStl = record.name.toLowerCase().endsWith(".stl");
+        const isPreviewable = record.name.toLowerCase().endsWith(".stl") || record.name.toLowerCase().endsWith(".gcode");
         return (
           <Space>
-            {isStl && (
+            {isPreviewable && (
               <Tooltip title="Preview 3D">
                 <Button
                   icon={<EyeOutlined />}
