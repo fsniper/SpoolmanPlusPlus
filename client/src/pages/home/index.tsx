@@ -11,10 +11,91 @@ import { Link } from "react-router";
 import Logo from "../../icon.svg?react";
 import { ISpool } from "../spools/model";
 import { FolderOutlined, AppstoreOutlined, PrinterOutlined } from "@ant-design/icons";
+import { IPrinter } from "../printers/model";
 
 dayjs.extend(utc);
 
 const { useToken } = theme;
+
+const PrinterStats = ({ printer }: { printer: IPrinter }) => {
+  const { token } = useToken();
+  const successfulPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [
+      { field: "status", operator: "eq", value: "successful" },
+      { field: "printer_id", operator: "eq", value: printer.id }
+    ],
+  });
+  const failedPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [
+      { field: "status", operator: "eq", value: "failed" },
+      { field: "printer_id", operator: "eq", value: printer.id }
+    ],
+  });
+  const inProgressPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [
+      { field: "status", operator: "eq", value: "in_progress" },
+      { field: "printer_id", operator: "eq", value: printer.id }
+    ],
+  });
+  const canceledPrintJobs = useList({
+    resource: "print_job",
+    pagination: { pageSize: 1 },
+    filters: [
+      { field: "status", operator: "eq", value: "canceled" },
+      { field: "printer_id", operator: "eq", value: printer.id }
+    ],
+  });
+
+  return (
+    <div style={{ marginTop: "1.5em" }}>
+      <Title level={4} style={{ textAlign: "center", marginBottom: "1em" }}>{printer.name} Prints</Title>
+      <Row justify="center" gutter={[16, 16]}>
+        <Col xs={12} md={6}>
+          <Card loading={inProgressPrintJobs.query.isLoading}>
+            <Statistic 
+              title="In Progress" 
+              value={inProgressPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorPrimary }} 
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card loading={successfulPrintJobs.query.isLoading}>
+            <Statistic 
+              title="Successful" 
+              value={successfulPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorSuccess }} 
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card loading={failedPrintJobs.query.isLoading}>
+            <Statistic 
+              title="Failed" 
+              value={failedPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorError }} 
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card loading={canceledPrintJobs.query.isLoading}>
+            <Statistic 
+              title="Canceled" 
+              value={canceledPrintJobs.result?.total || 0} 
+              valueStyle={{ color: token.colorTextDescription }} 
+            />
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+};
 
 export const Home = () => {
   const { token } = useToken();
@@ -46,25 +127,9 @@ export const Home = () => {
     resource: "print_job",
     pagination: { pageSize: 1 },
   });
-  const successfulPrintJobs = useList({
-    resource: "print_job",
-    pagination: { pageSize: 1 },
-    filters: [{ field: "status", operator: "eq", value: "successful" }],
-  });
-  const failedPrintJobs = useList({
-    resource: "print_job",
-    pagination: { pageSize: 1 },
-    filters: [{ field: "status", operator: "eq", value: "failed" }],
-  });
-  const inProgressPrintJobs = useList({
-    resource: "print_job",
-    pagination: { pageSize: 1 },
-    filters: [{ field: "status", operator: "eq", value: "in_progress" }],
-  });
-  const canceledPrintJobs = useList({
-    resource: "print_job",
-    pagination: { pageSize: 1 },
-    filters: [{ field: "status", operator: "eq", value: "canceled" }],
+  const printers = useList<IPrinter>({
+    resource: "printer",
+    pagination: { pageSize: 100 },
   });
 
   const hasSpools = !spools.result || spools.result.data.length > 0;
@@ -164,44 +229,10 @@ export const Home = () => {
         />
       </Row>
 
-      <Row justify="center" gutter={[16, 16]} style={{ marginTop: "1em" }}>
-        <Col xs={12} md={6}>
-          <Card loading={inProgressPrintJobs.query.isLoading}>
-            <Statistic 
-              title="In Progress Prints" 
-              value={inProgressPrintJobs.result?.total || 0} 
-              valueStyle={{ color: token.colorPrimary }} 
-            />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card loading={successfulPrintJobs.query.isLoading}>
-            <Statistic 
-              title="Successful Prints" 
-              value={successfulPrintJobs.result?.total || 0} 
-              valueStyle={{ color: token.colorSuccess }} 
-            />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card loading={failedPrintJobs.query.isLoading}>
-            <Statistic 
-              title="Failed Prints" 
-              value={failedPrintJobs.result?.total || 0} 
-              valueStyle={{ color: token.colorError }} 
-            />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card loading={canceledPrintJobs.query.isLoading}>
-            <Statistic 
-              title="Canceled Prints" 
-              value={canceledPrintJobs.result?.total || 0} 
-              valueStyle={{ color: token.colorTextDescription }} 
-            />
-          </Card>
-        </Col>
-      </Row>
+      {printers.result?.data.map((printer) => (
+        <PrinterStats key={printer.id} printer={printer} />
+      ))}
+
       {!hasSpools && (
         <>
           <p style={{ marginTop: 32 }}>{t("home.welcome")}</p>
