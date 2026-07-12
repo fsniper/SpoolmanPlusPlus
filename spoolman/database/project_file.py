@@ -56,7 +56,10 @@ async def create(
             db_item.name = file.filename or "unknown_file"
 
         uploads_dir = get_uploads_dir()
-        file_path = uploads_dir.joinpath(f"project_{project_id}_{db_item.name}")
+        project_uploads_dir = uploads_dir.joinpath(str(project_id))
+        project_uploads_dir.mkdir(parents=True, exist_ok=True)
+        
+        file_path = project_uploads_dir.joinpath(db_item.name)
         
         # Save the file physically
         with file_path.open("wb") as buffer:
