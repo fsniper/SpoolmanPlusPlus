@@ -7,6 +7,7 @@ import utc from "dayjs/plugin/utc";
 import { useSearchParams } from "react-router";
 import { IProject } from "../projects/model";
 import { IPlate } from "./model";
+import { ProjectFileSelect } from "./ProjectFileSelect";
 
 dayjs.extend(utc);
 
@@ -19,6 +20,7 @@ export const PlateCreate = (props: IResourceComponentsProps & CreateOrCloneProps
   const projectIdFromUrl = searchParams.get("project_id") ? Number(searchParams.get("project_id")) : undefined;
 
   const { form, formProps, formLoading, onFinish, redirect } = useForm<IPlate, HttpError, IPlate, IPlate>();
+  const selectedProjectId = Form.useWatch("project_id", form);
 
   const { selectProps: projectSelectProps } = useSelect<IProject>({
     resource: "project",
@@ -73,7 +75,10 @@ export const PlateCreate = (props: IResourceComponentsProps & CreateOrCloneProps
         <Form.Item label="Name" name={["name"]} rules={[{ required: true }]}>
           <Input maxLength={256} />
         </Form.Item>
-        <Form.Item label="File Path" name={["file_path"]}>
+        <Form.Item label="Project File" name={["project_file_id"]} help="Link this plate to an uploaded file or upload a new one.">
+          <ProjectFileSelect projectId={selectedProjectId || formProps.initialValues?.project_id} />
+        </Form.Item>
+        <Form.Item label="Raw File Path" name={["file_path"]} help="Alternative raw file path for the plate.">
           <Input maxLength={1024} placeholder="/path/to/file.gcode" />
         </Form.Item>
         <Form.Item

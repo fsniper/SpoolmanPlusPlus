@@ -415,7 +415,6 @@ class ProjectFile(BaseModel):
     name: str = Field(min_length=1, max_length=256, description="File name.", examples=["cube.stl"])
     file_path: str | None = Field(None, max_length=1024, description="Path or link to the file.")
     size: int | None = Field(None, description="Size of the file in bytes.")
-    plate_id: int | None = Field(None, description="Associated plate ID if linked from a plate.")
 
     @staticmethod
     def from_db(item: models.ProjectFile) -> "ProjectFile":
@@ -426,7 +425,6 @@ class ProjectFile(BaseModel):
             name=item.name,
             file_path=item.file_path,
             size=item.size,
-            plate_id=item.plate_id,
         )
 
 
@@ -437,6 +435,7 @@ class Plate(BaseModel):
     project_id: int = Field(description="Associated project ID.")
     name: str = Field(min_length=1, max_length=256, description="Plate name.", examples=["Plate Alpha"])
     file_path: str | None = Field(None, max_length=1024, description="Optional G-code file path.")
+    project_file_id: int | None = Field(None, description="Linked project file ID.")
     estimated_weight: float | None = Field(None, ge=0, description="Estimated filament weight in grams.")
     estimated_time: int | None = Field(None, ge=0, description="Estimated printing time in seconds.")
     comment: str | None = Field(None, max_length=1024, description="Optional comment.")
@@ -449,6 +448,7 @@ class Plate(BaseModel):
             project_id=item.project_id,
             name=item.name,
             file_path=item.file_path,
+            project_file_id=item.project_file_id,
             estimated_weight=item.estimated_weight,
             estimated_time=item.estimated_time,
             comment=item.comment,

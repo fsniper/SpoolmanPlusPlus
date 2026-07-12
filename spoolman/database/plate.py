@@ -22,6 +22,7 @@ async def create(
     project_id: int,
     name: str,
     file_path: str | None = None,
+    project_file_id: int | None = None,
     estimated_weight: float | None = None,
     estimated_time: int | None = None,
     comment: str | None = None,
@@ -35,6 +36,7 @@ async def create(
         name=name,
         registered=datetime.utcnow().replace(microsecond=0),
         file_path=file_path,
+        project_file_id=project_file_id,
         estimated_weight=estimated_weight,
         estimated_time=estimated_time,
         comment=comment,
@@ -105,6 +107,10 @@ async def update(
     if "project_id" in data:
         # Verify project exists
         await project.get_by_id(db, data["project_id"])
+        
+    if "project_file_id" in data and data["project_file_id"] is not None:
+        from spoolman.database import project_file
+        await project_file.get_by_id(db, data["project_file_id"])
 
     for k, v in data.items():
         setattr(plate, k, v)

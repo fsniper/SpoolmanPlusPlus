@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { useState } from "react";
 import { IProject } from "../projects/model";
 import { IPlate } from "./model";
+import { ProjectFileSelect } from "./ProjectFileSelect";
 
 export const PlateEdit = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -18,6 +19,8 @@ export const PlateEdit = () => {
       setHasChanged(true);
     },
   });
+  
+  const selectedProjectId = Form.useWatch("project_id", formProps.form);
 
   const { selectProps: projectSelectProps } = useSelect<IProject>({
     resource: "project",
@@ -57,7 +60,10 @@ export const PlateEdit = () => {
         <Form.Item label="Name" name={["name"]} rules={[{ required: true }]}>
           <Input maxLength={256} />
         </Form.Item>
-        <Form.Item label="File Path" name={["file_path"]}>
+        <Form.Item label="Project File" name={["project_file_id"]} help="Link this plate to an uploaded file or upload a new one.">
+          <ProjectFileSelect projectId={selectedProjectId || formProps.initialValues?.project_id} />
+        </Form.Item>
+        <Form.Item label="Raw File Path" name={["file_path"]} help="Alternative raw file path for the plate.">
           <Input maxLength={1024} placeholder="/path/to/file.gcode" />
         </Form.Item>
         <Form.Item

@@ -34,6 +34,11 @@ class PlateParameters(BaseModel):
         description="Optional G-code file path.",
         examples=["test.gcode"],
     )
+    project_file_id: int | None = Field(
+        None,
+        description="Linked project file ID.",
+        examples=[1],
+    )
     estimated_weight: float | None = Field(
         None,
         ge=0,
@@ -58,6 +63,7 @@ class PlateUpdateParameters(BaseModel):
     project_id: int | None = Field(None, description="Associated project ID.")
     name: str | None = Field(None, min_length=1, max_length=256, description="Plate name.", examples=["Plate Alpha"])
     file_path: str | None = Field(None, max_length=1024, description="Optional G-code file path.")
+    project_file_id: int | None = Field(None, description="Linked project file ID.")
     estimated_weight: float | None = Field(None, ge=0, description="Estimated filament weight in grams.")
     estimated_time: int | None = Field(None, ge=0, description="Estimated printing time in seconds.")
     comment: str | None = Field(None, max_length=1024, description="Optional comment.")
@@ -220,6 +226,7 @@ async def create(  # noqa: ANN201
         project_id=body.project_id,
         name=body.name,
         file_path=body.file_path,
+        project_file_id=body.project_file_id,
         estimated_weight=body.estimated_weight,
         estimated_time=body.estimated_time,
         comment=body.comment,
